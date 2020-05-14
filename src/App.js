@@ -14,13 +14,16 @@ import {
   Text,
   StatusBar,
   Dimensions,
+  Button,
 } from 'react-native';
 import DropdownMenu from 'react-native-dropdown-menu';
 import { WheelPicker } from "react-native-wheel-picker-android";
 import QuranSurahs from "./QuranSurahs.json";
+import { GetUserBookmarkDetailsAsync } from "./services/saveBookmarkService";
 import styles from "./App.Styles";
 
 const _screenWidthHalf = Math.floor(Dimensions.get("screen").width / 2);
+const _screenWidth1By3 = Math.floor(Dimensions.get("screen").width / 3);
 const _QuranSurahsNames = QuranSurahs.map((v) => v.name);
 const _QuranSurahsVerseCounts = QuranSurahs.map((v) => {
   const verses = [];
@@ -31,13 +34,24 @@ const _QuranSurahsVerseCounts = QuranSurahs.map((v) => {
 
 const data = [[]];
 
-
 /**
  * @returns {() => React$Node}
  */
 const App = () => {
   const [selectedSurahNameIndex, setSelectedSurahNameIndex] = React.useState(0);
   const [selectedSurahVerseCountIndex, setSelectedSurahVerseCountIndex] = React.useState(0);
+  const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(false);
+
+  React.useEffect(() => {
+    GetUserBookmarkDetailsAsync().then(bookmarkDetails => {
+      setSelectedSurahNameIndex(bookmarkDetails.SurahNumber);
+      setSelectedSurahVerseCountIndex(bookmarkDetails.AayahNumber);
+    });
+  }, []); // an empty array is necessary, coz: https://stackoverflow.com/a/54923969/8075004
+
+  function OnPressSaveButton(ev) {
+    console.log(selectedSurahNameIndex, selectedSurahVerseCountIndex);
+  }
 
   return <>
     <StatusBar barStyle="light-content" />
@@ -48,7 +62,7 @@ const App = () => {
       >
         <View style={{ marginTop: 100 }} />
 
-        <View style={{ flex: 1, flexDirection: "row", }}>
+        <View style={{ flex: 1, flexDirection: "column" }}>
 
           {/* <DropdownMenu
             style={{ flex: 1 }}
@@ -66,7 +80,6 @@ const App = () => {
             data={data}
           > */}
 
-
           <View style={{ flex: 1, flexDirection: "row", marginTop: 20 }}>
             <View style={{ width: _screenWidthHalf, alignItems: "center" }}>
               <Text style={{ fontSize: 20 }}>Surah</Text>
@@ -82,20 +95,25 @@ const App = () => {
               <WheelPicker
                 selectedItem={selectedSurahNameIndex}
                 data={_QuranSurahsNames}
-                onItemSelected={() => { }}
+                onItemSelected={setSelectedSurahNameIndex}
               />
             </View>
             <View style={{ width: _screenWidthHalf }}>
               <WheelPicker
                 selectedItem={selectedSurahVerseCountIndex}
-                data={_QuranSurahsVerseCounts[0]}
-                onItemSelected={() => { }}
+                data={_QuranSurahsVerseCounts[selectedSurahNameIndex]}
+                onItemSelected={setSelectedSurahVerseCountIndex}
               />
             </View>
 
           </View>
-
           {/* </DropdownMenu> */}
+        </View>
+
+        <View style={{ flexDirection: "row", justifyContent: "center" }}>
+          <View style={{ width: _screenWidth1By3 }}>
+            <Button onPress={OnPressSaveButton} title="Save" disabled={saveButtonDisabled} />
+          </View>
         </View>
 
       </ScrollView>
